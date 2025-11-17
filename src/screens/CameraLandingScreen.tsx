@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,183 +6,122 @@ import {
   StyleSheet,
   Platform,
   Dimensions,
+  Alert,
 } from 'react-native';
-
 import { Ionicons } from '@expo/vector-icons';
-import { Camera as ExpoCamera, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-// Fallback camera component for web
-const CameraFallback = React.forwardRef<View, any>((props: any, ref) => (
-  <View style={[props.style, { backgroundColor: '#1a1a1a' }]} ref={ref}>
-    {props.children}
-  </View>
-));
-
 export default function CameraLandingScreen() {
   const cameraRef = useRef<any>(null);
-  const [permission, setPermission] = useState<any>(null);
-  const [cameraComponent, setCameraComponent] = useState<any>(CameraFallback);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  
-  // Use the actual expo-camera permissions hook
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraType, setCameraType] = useState<CameraType>('back');
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const initCamera = async () => {
-      try {
-        console.log('Initializing camera...');
-        
-        // Check if we're on web platform (camera doesn't work on web)
-        if (Platform.OS === 'web') {
-          console.warn('Camera not supported on web platform');
-          if (isMounted) {
-            setIsCameraActive(false);
-            setCameraError('Camera not supported on web browsers. Please use a mobile device.');
-            setPermission({
-              permission: { granted: true },
-              requestPermission: () => {}
-            });
-          }
-          return;
-        }
-        
-        // Check if ExpoCamera is available
-        if (ExpoCamera && typeof ExpoCamera === 'function') {
-          console.log('Expo Camera component is available');
-          setCameraComponent(() => ExpoCamera);
-          setIsCameraActive(true);
-        } else {
-          console.warn('Expo Camera component not available, using fallback');
-          setIsCameraActive(false);
-          setCameraError('Camera component not found. Check if expo-camera is properly installed.');
-        }
-        
-        // Set up permissions using the actual hook
-        if (isMounted && cameraPermission) {
-          setPermission({
-            permission: cameraPermission,
-            requestPermission: requestCameraPermission
-          });
-        }
-        
-      } catch (error) {
-        console.error('Failed to initialize camera:', error);
-        if (isMounted) {
-          console.log('Using fallback due to initialization error');
-          setIsCameraActive(false);
-          setCameraError(`Camera initialization failed: ${error instanceof Error ? error.message : String(error)}`);
-          setPermission({
-            permission: { granted: true },
-            requestPermission: () => {}
-          });
-        }
-      }
-    };
+    console.log('Camera permission status:', permission);
+  }, [permission]);
 
-    // Add a small delay to ensure React Native is fully initialized
-    const initTimer = setTimeout(() => {
-      initCamera();
-    }, 100);
+  const handleCameraReady = () => {
+    console.log('Camera is ready');
+    setCameraReady(true);
+  };
 
-    return () => {
-      isMounted = false;
-      clearTimeout(initTimer);
-    };
-  }, [retryCount, cameraPermission, requestCameraPermission]);
+  const takePicture = async () => {
+    if (!cameraRef.current || !cameraReady) {
+      Alert.alert('Camera not ready', 'Please wait for the camera to initialize');
+      return;
+    }
 
-  const retryCamera = () => {
-    console.log('Retrying camera initialization...');
-    setRetryCount(prev => prev + 1);
-    setCameraError(null);
+    try {
+      console.log('Taking picture...');
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: false,
+      });
+      console.log('Picture taken:', photo);
+      Alert.alert('Success', 'Picture captured successfully!');
+    } catch (error) {
+      console.error('Error taking picture:', error);
+      Alert.alert('Error', 'Failed to take picture. Please try again.');
+    }
+  };
+
+  const toggleCameraType = () => {
+    setCameraType(current => 
+      current === 'back' ? 'front' : 'back'
+    );
   };
 
   if (!permission) {
-    return <View style={styles.container} />;
-  }
-
-  const { permission: perm, requestPermission } = permission;
-
-  if (!perm?.granted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.permissionText}>
-          We need camera permission to continue
-        </Text>
-        <TouchableOpacity
-          style={styles.permissionButton}
-          onPress={requestPermission}
-        >
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
-        </TouchableOpacity>
+        <Text style={styles.loadingText}>Loading camera...</Text>
       </View>
     );
   }
 
-  const Camera = cameraComponent;
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.permissionContainer}>
+          <Ionicons name="camera-outline" size={64} color="#FFFFFF" />
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionText}>
+            We need your permission to use the camera for taking photos.
+          </Text>
+          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+            <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.cameraContainer}>
-        {/* @ts-ignore - Expo Camera TypeScript issues */}
-        <Camera ref={cameraRef} style={styles.camera}>
-          <View style={styles.topBar}>
-            <View style={styles.brandContainer}>
-              <Text style={styles.brandEmoji}>🎁</Text>
-              <Text style={styles.brandText}>Get pro</Text>
+      <CameraView
+        ref={cameraRef}
+        style={styles.camera}
+        facing={cameraType}
+        onCameraReady={handleCameraReady}
+      >
+        {/* Top Bar */}
+        <View style={styles.topBar}>
+          <View style={styles.brandContainer}>
+            <Text style={styles.brandEmoji}>🎁</Text>
+            <Text style={styles.brandText}>Get pro</Text>
+          </View>
+          
+          {/* Camera Status */}
+          {!cameraReady && (
+            <View style={styles.cameraStatus}>
+              <Ionicons name="sync-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.cameraStatusText}>Initializing...</Text>
             </View>
-            
-            {/* Camera status indicator */}
-            {!isCameraActive && (
-              <View style={styles.cameraStatusContainer}>
-                <View style={styles.cameraStatus}>
-                  <Ionicons name="warning-outline" size={16} color="#FF9500" />
-                  <Text style={styles.cameraStatusText}>Camera not available</Text>
-                </View>
-              </View>
-            )}
-          </View>
+          )}
+        </View>
 
-          <View style={styles.centerContent}>
-            <Text style={styles.instructionText}>
-              Take a pic and get{'\n'}an answer
-            </Text>
-            
-            {/* Show fallback message when camera is not active */}
-            {!isCameraActive && (
-              <View style={styles.fallbackMessage}>
-                <Ionicons name="camera-outline" size={48} color="#FFFFFF" />
-                <Text style={styles.fallbackText}>
-                  Camera preview not available{'\n'}
-                  You can still take photos
-                </Text>
-                {cameraError && (
-                  <Text style={styles.errorText}>
-                    {cameraError}
-                  </Text>
-                )}
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={retryCamera}
-                >
-                  <Text style={styles.retryButtonText}>
-                    Retry Camera
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </Camera>
-      </View>
+        {/* Center Content */}
+        <View style={styles.centerContent}>
+          <Text style={styles.instructionText}>
+            Take a pic and get{'\n'}an answer
+          </Text>
+        </View>
 
+        {/* Camera Controls */}
+        <View style={styles.cameraControls}>
+          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraType}>
+            <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </CameraView>
+
+      {/* Footer */}
       <View style={styles.footerWrapper}>
         <View style={styles.whiteTopBorder} />
-
         <View style={styles.footerContent}>
           <View style={styles.captureContainer}>
             <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
@@ -191,7 +130,12 @@ export default function CameraLandingScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.captureButton} 
+              activeOpacity={0.7}
+              onPress={takePicture}
+              disabled={!cameraReady}
+            >
               <View style={styles.outerRing}>
                 <View style={styles.middleRing}>
                   <View style={styles.innerCircle} />
@@ -235,29 +179,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  permissionText: {
+  loadingText: {
+    color: '#FFFFFF',
     textAlign: 'center',
+    marginTop: SCREEN_HEIGHT / 2,
+    fontSize: 16,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  permissionTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 20,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  permissionText: {
     color: '#FFFFFF',
     fontSize: 16,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    marginTop: SCREEN_HEIGHT / 2 - 50,
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 22,
   },
   permissionButton: {
     backgroundColor: '#007AFF',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 10,
-    alignSelf: 'center',
   },
   permissionButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  cameraContainer: {
-    flex: 1,
-    backgroundColor: '#000000',
   },
   camera: {
     flex: 1,
@@ -294,6 +252,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  cameraStatus: {
+    position: 'absolute',
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  cameraStatusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
   centerContent: {
     position: 'absolute',
     top: '40%',
@@ -307,6 +281,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  cameraControls: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 40,
+    right: 20,
+    zIndex: 10,
+  },
+  flipButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footerWrapper: {
     position: 'relative',
@@ -349,6 +337,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  captureButton: {
+    opacity: 1,
   },
   outerRing: {
     width: 90,
@@ -409,57 +400,5 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: '#FFFFFF',
     borderRadius: 1,
-  },
-  cameraStatusContainer: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 40,
-    right: 20,
-    zIndex: 20,
-  },
-  cameraStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 149, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.5)',
-  },
-  cameraStatusText: {
-    color: '#FF9500',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  fallbackMessage: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  fallbackText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 22,
-  },
-  errorText: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 18,
-  },
-  retryButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
