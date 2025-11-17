@@ -9,11 +9,12 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import { Camera as ExpoCamera, useCameraPermissions } from 'expo-camera';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Fallback camera component for web
-const CameraFallback = React.forwardRef((props: any, ref) => (
+const CameraFallback = React.forwardRef<View, any>((props: any, ref) => (
   <View style={[props.style, { backgroundColor: '#1a1a1a' }]} ref={ref}>
     {props.children}
   </View>
@@ -26,6 +27,9 @@ export default function CameraLandingScreen() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  
+  // Use the actual expo-camera permissions hook
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   useEffect(() => {
     let isMounted = true;
@@ -48,75 +52,25 @@ export default function CameraLandingScreen() {
           return;
         }
         
-        // Try to import expo-camera with retry logic
-        let CameraModule;
-        let importAttempts = 0;
-        const maxAttempts = 3;
-        
-        while (importAttempts < maxAttempts) {
-          try {
-            CameraModule = await import('expo-camera');
-            console.log('Camera module loaded successfully on attempt', importAttempts + 1);
-            break;
-          } catch (importError) {
-            importAttempts++;
-            console.warn(`Camera import attempt ${importAttempts} failed:`, importError);
-            if (importAttempts === maxAttempts) {
-              throw importError;
-            }
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
+        // Check if ExpoCamera is available
+        if (ExpoCamera && typeof ExpoCamera === 'function') {
+          console.log('Expo Camera component is available');
+          setCameraComponent(() => ExpoCamera);
+          setIsCameraActive(true);
+        } else {
+          console.warn('Expo Camera component not available, using fallback');
+          setIsCameraActive(false);
+          setCameraError('Camera component not found. Check if expo-camera is properly installed.');
         }
         
-        console.log('Camera module loaded:', CameraModule);
-        
-        if (isMounted) {
-          // Check if Camera component is available and is a function
-          if (CameraModule && CameraModule.Camera && typeof CameraModule.Camera === 'function') {
-            console.log('Setting camera component');
-            setCameraComponent(() => CameraModule.Camera);
-            setIsCameraActive(true);
-          } else {
-            console.warn('Camera component not available, using fallback');
-            setIsCameraActive(false);
-            setCameraError('Camera component not found. Check if expo-camera is properly installed.');
-          }
-          
-          // Handle permissions with fallback
-          const hook = CameraModule?.useCameraPermissions;
-          if (typeof hook === 'function') {
-            console.log('Setting up camera permissions');
-            try {
-              const [perm, requestPerm] = hook();
-              setPermission({ permission: perm, requestPermission: requestPerm });
-            } catch (permissionError) {
-              console.warn('Camera permissions hook error:', permissionError);
-              setPermission({
-                permission: { granted: false },
-                requestPermission: async () => {
-                  console.log('Requesting camera permission...');
-                  setPermission({
-                    permission: { granted: true },
-                    requestPermission: () => {}
-                  });
-                }
-              });
-            }
-          } else {
-            console.warn('Camera permissions hook not available');
-            setPermission({
-              permission: { granted: false },
-              requestPermission: async () => {
-                console.log('Requesting camera permission...');
-                setPermission({
-                  permission: { granted: true },
-                  requestPermission: () => {}
-                });
-              }
-            });
-          }
+        // Set up permissions using the actual hook
+        if (isMounted && cameraPermission) {
+          setPermission({
+            permission: cameraPermission,
+            requestPermission: requestCameraPermission
+          });
         }
+        
       } catch (error) {
         console.error('Failed to initialize camera:', error);
         if (isMounted) {
@@ -140,7 +94,7 @@ export default function CameraLandingScreen() {
       isMounted = false;
       clearTimeout(initTimer);
     };
-  }, [retryCount]);
+  }, [retryCount, cameraPermission, requestCameraPermission]);
 
   const retryCamera = () => {
     console.log('Retrying camera initialization...');
