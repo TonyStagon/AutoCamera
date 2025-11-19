@@ -554,7 +554,6 @@ function SimpleCropBox({
   const scaleX = displayWidth / imageWidth;
   const scaleY = displayHeight / imageHeight;
 
-  // Always use the web/simple version - gesture handler not available for web bundling
   return (
     <View style={styles.cropBoxContainer}>
       <View style={styles.cropBoxWrapper}>
@@ -724,6 +723,9 @@ function InteractiveCropBox({
     dragTypeRef.current = null;
   };
 
+  const cornerLength = 25; // Length of each bracket arm
+  const cornerThickness = 2; // Thickness of bracket lines
+
   return (
     <View
       style={[
@@ -738,30 +740,110 @@ function InteractiveCropBox({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* White border - draggable area */}
+      {/* Draggable area (transparent, no border) */}
       <View
         style={styles.cropBoxBorder}
         onTouchStart={(e) => handleTouchStart('move', e)}
       />
 
-      {/* Corner resize handles */}
+      {/* TOP-LEFT CORNER BRACKET */}
+      <View style={styles.cornerBracketTopLeft}>
+        {/* Horizontal line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerLength, 
+          height: cornerThickness,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }]} />
+        {/* Vertical line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerThickness, 
+          height: cornerLength,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }]} />
+      </View>
+
+      {/* TOP-RIGHT CORNER BRACKET */}
+      <View style={styles.cornerBracketTopRight}>
+        {/* Horizontal line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerLength, 
+          height: cornerThickness,
+          position: 'absolute',
+          top: 0,
+          right: 0,
+        }]} />
+        {/* Vertical line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerThickness, 
+          height: cornerLength,
+          position: 'absolute',
+          top: 0,
+          right: 0,
+        }]} />
+      </View>
+
+      {/* BOTTOM-LEFT CORNER BRACKET */}
+      <View style={styles.cornerBracketBottomLeft}>
+        {/* Horizontal line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerLength, 
+          height: cornerThickness,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+        }]} />
+        {/* Vertical line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerThickness, 
+          height: cornerLength,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+        }]} />
+      </View>
+
+      {/* BOTTOM-RIGHT CORNER BRACKET */}
+      <View style={styles.cornerBracketBottomRight}>
+        {/* Horizontal line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerLength, 
+          height: cornerThickness,
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+        }]} />
+        {/* Vertical line */}
+        <View style={[styles.bracketLine, { 
+          width: cornerThickness, 
+          height: cornerLength,
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+        }]} />
+      </View>
+
+      {/* Corner resize handles (invisible but functional) */}
       <TouchableOpacity
-        style={[styles.resizeHandle, { top: -6, left: -6 }]}
+        style={[styles.resizeHandle, styles.resizeHandleInvisible, { top: -6, left: -6 }]}
         onPressIn={(e) => handleTouchStart('tl', e)}
         activeOpacity={1}
       />
       <TouchableOpacity
-        style={[styles.resizeHandle, { top: -6, right: -6 }]}
+        style={[styles.resizeHandle, styles.resizeHandleInvisible, { top: -6, right: -6 }]}
         onPressIn={(e) => handleTouchStart('tr', e)}
         activeOpacity={1}
       />
       <TouchableOpacity
-        style={[styles.resizeHandle, { bottom: -6, left: -6 }]}
+        style={[styles.resizeHandle, styles.resizeHandleInvisible, { bottom: -6, left: -6 }]}
         onPressIn={(e) => handleTouchStart('bl', e)}
         activeOpacity={1}
       />
       <TouchableOpacity
-        style={[styles.resizeHandle, { bottom: -6, right: -6 }]}
+        style={[styles.resizeHandle, styles.resizeHandleInvisible, { bottom: -6, right: -6 }]}
         onPressIn={(e) => handleTouchStart('br', e)}
         activeOpacity={1}
       />
@@ -1064,13 +1146,44 @@ const styles = StyleSheet.create({
   },
   cropBoxOverlay: {
     position: 'absolute',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 0,
   },
   cropBoxBorder: {
     flex: 1,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
+  // Corner bracket styles
+  cornerBracketTopLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 25,
+    height: 25,
+  },
+  cornerBracketTopRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 25,
+    height: 25,
+  },
+  cornerBracketBottomLeft: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 25,
+    height: 25,
+  },
+  cornerBracketBottomRight: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 25,
+    height: 25,
+  },
+  bracketLine: {
+    backgroundColor: '#FFFFFF',
   },
   resizeHandle: {
     position: 'absolute',
@@ -1079,6 +1192,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#FFFFFF',
     zIndex: 10,
+  },
+  resizeHandleInvisible: {
+    backgroundColor: 'transparent',
+    width: 24,
+    height: 24,
   },
   edgeHandle: {
     position: 'absolute',
