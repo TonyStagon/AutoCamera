@@ -263,6 +263,76 @@ export default function CameraLandingScreen() {
     });
   };
 
+  const handleResizeTop = (e: any, scaleX: number, scaleY: number) => {
+    if (!cropRegion || !photoInfo) return;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaY = (touch.pageY - resizeStateRef.current.startY) / scaleY;
+
+    let newHeight = resizeStateRef.current.startHeight - deltaY;
+    let newY = resizeStateRef.current.startCropY + deltaY;
+
+    const minSize = 50;
+    newHeight = Math.max(minSize, newHeight);
+    newY = Math.max(0, Math.min(newY, photoInfo.height - minSize));
+
+    setCropRegion({
+      ...cropRegion,
+      y: newY,
+      height: newHeight,
+    });
+  };
+
+  const handleResizeBottom = (e: any, scaleX: number, scaleY: number) => {
+    if (!cropRegion || !photoInfo) return;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaY = (touch.pageY - resizeStateRef.current.startY) / scaleY;
+
+    let newHeight = resizeStateRef.current.startHeight + deltaY;
+
+    const minSize = 50;
+    newHeight = Math.max(minSize, Math.min(newHeight, photoInfo.height - cropRegion.y));
+
+    setCropRegion({
+      ...cropRegion,
+      height: newHeight,
+    });
+  };
+
+  const handleResizeLeft = (e: any, scaleX: number, scaleY: number) => {
+    if (!cropRegion || !photoInfo) return;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - resizeStateRef.current.startX) / scaleX;
+
+    let newWidth = resizeStateRef.current.startWidth - deltaX;
+    let newX = resizeStateRef.current.startCropX + deltaX;
+
+    const minSize = 50;
+    newWidth = Math.max(minSize, newWidth);
+    newX = Math.max(0, Math.min(newX, photoInfo.width - minSize));
+
+    setCropRegion({
+      ...cropRegion,
+      x: newX,
+      width: newWidth,
+    });
+  };
+
+  const handleResizeRight = (e: any, scaleX: number, scaleY: number) => {
+    if (!cropRegion || !photoInfo) return;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - resizeStateRef.current.startX) / scaleX;
+
+    let newWidth = resizeStateRef.current.startWidth + deltaX;
+
+    const minSize = 50;
+    newWidth = Math.max(minSize, Math.min(newWidth, photoInfo.width - cropRegion.x));
+
+    setCropRegion({
+      ...cropRegion,
+      width: newWidth,
+    });
+  };
+
   const closeCropBox = () => {
     setCapturedPhoto(null);
     setPhotoInfo(null);
@@ -310,6 +380,10 @@ export default function CameraLandingScreen() {
           onResizeTopLeft={handleResizeTopLeft}
           onResizeTopRight={handleResizeTopRight}
           onResizeBottomLeft={handleResizeBottomLeft}
+          onResizeTop={handleResizeTop}
+          onResizeBottom={handleResizeBottom}
+          onResizeLeft={handleResizeLeft}
+          onResizeRight={handleResizeRight}
           onClose={closeCropBox}
         />
       </View>
@@ -433,13 +507,17 @@ interface SimpleCropBoxProps {
   imageWidth: number;
   imageHeight: number;
   cropRegion: CropRegion;
-  onCropDragStart: (e: any) => void;
-  onCropDrag: (e: any) => void;
-  onResizeStart: (e: any) => void;
-  onResizeBottomRight: (e: any) => void;
-  onResizeTopLeft: (e: any) => void;
-  onResizeTopRight: (e: any) => void;
-  onResizeBottomLeft: (e: any) => void;
+  onCropDragStart: (e: any, scaleX: number, scaleY: number) => void;
+  onCropDrag: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeStart: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeBottomRight: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeTopLeft: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeTopRight: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeBottomLeft: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeTop: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeBottom: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeLeft: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeRight: (e: any, scaleX: number, scaleY: number) => void;
   onClose: () => void;
 }
 
@@ -455,6 +533,10 @@ function SimpleCropBox({
   onResizeTopLeft,
   onResizeTopRight,
   onResizeBottomLeft,
+  onResizeTop,
+  onResizeBottom,
+  onResizeLeft,
+  onResizeRight,
   onClose,
 }: SimpleCropBoxProps) {
   // Calculate display dimensions to fit image on screen
@@ -538,6 +620,10 @@ function SimpleCropBox({
             onResizeTopLeft={onResizeTopLeft}
             onResizeTopRight={onResizeTopRight}
             onResizeBottomLeft={onResizeBottomLeft}
+            onResizeTop={onResizeTop}
+            onResizeBottom={onResizeBottom}
+            onResizeLeft={onResizeLeft}
+            onResizeRight={onResizeRight}
           />
         </View>
 
@@ -555,18 +641,22 @@ function SimpleCropBox({
   );
 }
 
-// Interactive crop box component using mouse events for web compatibility
+// Interactive crop box component using touch events for mobile
 interface InteractiveCropBoxProps {
   cropRegion: CropRegion;
   scaleX: number;
   scaleY: number;
-  onCropDragStart: (e: any) => void;
-  onCropDrag: (e: any) => void;
-  onResizeStart: (e: any) => void;
-  onResizeBottomRight: (e: any) => void;
-  onResizeTopLeft: (e: any) => void;
-  onResizeTopRight: (e: any) => void;
-  onResizeBottomLeft: (e: any) => void;
+  onCropDragStart: (e: any, scaleX: number, scaleY: number) => void;
+  onCropDrag: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeStart: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeBottomRight: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeTopLeft: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeTopRight: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeBottomLeft: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeTop: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeBottom: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeLeft: (e: any, scaleX: number, scaleY: number) => void;
+  onResizeRight: (e: any, scaleX: number, scaleY: number) => void;
 }
 
 function InteractiveCropBox({
@@ -580,10 +670,14 @@ function InteractiveCropBox({
   onResizeTopLeft,
   onResizeTopRight,
   onResizeBottomLeft,
+  onResizeTop,
+  onResizeBottom,
+  onResizeLeft,
+  onResizeRight,
 }: InteractiveCropBoxProps) {
-  const dragTypeRef = useRef<'move' | 'tl' | 'tr' | 'bl' | 'br' | null>(null);
+  const dragTypeRef = useRef<'move' | 'tl' | 'tr' | 'bl' | 'br' | 't' | 'b' | 'l' | 'r' | null>(null);
 
-  const handleTouchStart = (type: 'move' | 'tl' | 'tr' | 'bl' | 'br', e: any) => {
+  const handleTouchStart = (type: 'move' | 'tl' | 'tr' | 'bl' | 'br' | 't' | 'b' | 'l' | 'r', e: any) => {
     dragTypeRef.current = type;
     if (type === 'move') {
       onCropDragStart(e, scaleX, scaleY);
@@ -595,16 +689,34 @@ function InteractiveCropBox({
   const handleTouchMove = (e: any) => {
     if (!dragTypeRef.current) return;
 
-    if (dragTypeRef.current === 'move') {
-      onCropDrag(e, scaleX, scaleY);
-    } else if (dragTypeRef.current === 'tl') {
-      onResizeTopLeft(e, scaleX, scaleY);
-    } else if (dragTypeRef.current === 'tr') {
-      onResizeTopRight(e, scaleX, scaleY);
-    } else if (dragTypeRef.current === 'bl') {
-      onResizeBottomLeft(e, scaleX, scaleY);
-    } else if (dragTypeRef.current === 'br') {
-      onResizeBottomRight(e, scaleX, scaleY);
+    switch (dragTypeRef.current) {
+      case 'move':
+        onCropDrag(e, scaleX, scaleY);
+        break;
+      case 'tl':
+        onResizeTopLeft(e, scaleX, scaleY);
+        break;
+      case 'tr':
+        onResizeTopRight(e, scaleX, scaleY);
+        break;
+      case 'bl':
+        onResizeBottomLeft(e, scaleX, scaleY);
+        break;
+      case 'br':
+        onResizeBottomRight(e, scaleX, scaleY);
+        break;
+      case 't':
+        onResizeTop(e, scaleX, scaleY);
+        break;
+      case 'b':
+        onResizeBottom(e, scaleX, scaleY);
+        break;
+      case 'l':
+        onResizeLeft(e, scaleX, scaleY);
+        break;
+      case 'r':
+        onResizeRight(e, scaleX, scaleY);
+        break;
     }
   };
 
@@ -632,7 +744,7 @@ function InteractiveCropBox({
         onTouchStart={(e) => handleTouchStart('move', e)}
       />
 
-      {/* Resize handles */}
+      {/* Corner resize handles */}
       <TouchableOpacity
         style={[styles.resizeHandle, { top: -6, left: -6 }]}
         onPressIn={(e) => handleTouchStart('tl', e)}
@@ -651,6 +763,28 @@ function InteractiveCropBox({
       <TouchableOpacity
         style={[styles.resizeHandle, { bottom: -6, right: -6 }]}
         onPressIn={(e) => handleTouchStart('br', e)}
+        activeOpacity={1}
+      />
+
+      {/* Edge resize handles */}
+      <TouchableOpacity
+        style={[styles.edgeHandle, styles.topEdge]}
+        onPressIn={(e) => handleTouchStart('t', e)}
+        activeOpacity={1}
+      />
+      <TouchableOpacity
+        style={[styles.edgeHandle, styles.bottomEdge]}
+        onPressIn={(e) => handleTouchStart('b', e)}
+        activeOpacity={1}
+      />
+      <TouchableOpacity
+        style={[styles.edgeHandle, styles.leftEdge]}
+        onPressIn={(e) => handleTouchStart('l', e)}
+        activeOpacity={1}
+      />
+      <TouchableOpacity
+        style={[styles.edgeHandle, styles.rightEdge]}
+        onPressIn={(e) => handleTouchStart('r', e)}
         activeOpacity={1}
       />
     </View>
@@ -944,6 +1078,36 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: '#FFFFFF',
+    zIndex: 10,
+  },
+  edgeHandle: {
+    position: 'absolute',
+    backgroundColor: 'transparent',
+    zIndex: 5,
+  },
+  topEdge: {
+    top: -8,
+    left: 20,
+    right: 20,
+    height: 16,
+  },
+  bottomEdge: {
+    bottom: -8,
+    left: 20,
+    right: 20,
+    height: 16,
+  },
+  leftEdge: {
+    left: -8,
+    top: 20,
+    bottom: 20,
+    width: 16,
+  },
+  rightEdge: {
+    right: -8,
+    top: 20,
+    bottom: 20,
+    width: 16,
   },
   cropActionButtons: {
     flexDirection: 'row',
