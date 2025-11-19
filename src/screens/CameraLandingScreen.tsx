@@ -128,20 +128,22 @@ export default function CameraLandingScreen() {
     return 'flash-off';
   };
 
-  const handleCropDragStart = (e: any) => {
+  const handleCropDragStart = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion) return;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
     dragStateRef.current = {
-      startX: e.nativeEvent.x,
-      startY: e.nativeEvent.y,
+      startX: touch.pageX,
+      startY: touch.pageY,
       startCropX: cropRegion.x,
       startCropY: cropRegion.y,
     };
   };
 
-  const handleCropDrag = (e: any) => {
+  const handleCropDrag = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion || !photoInfo) return;
-    const deltaX = e.nativeEvent.x - dragStateRef.current.startX;
-    const deltaY = e.nativeEvent.y - dragStateRef.current.startY;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - dragStateRef.current.startX) / scaleX;
+    const deltaY = (touch.pageY - dragStateRef.current.startY) / scaleY;
 
     let newX = dragStateRef.current.startCropX + deltaX;
     let newY = dragStateRef.current.startCropY + deltaY;
@@ -157,11 +159,12 @@ export default function CameraLandingScreen() {
     });
   };
 
-  const handleResizeStart = (e: any) => {
+  const handleResizeStart = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion) return;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
     resizeStateRef.current = {
-      startX: e.nativeEvent.x,
-      startY: e.nativeEvent.y,
+      startX: touch.pageX,
+      startY: touch.pageY,
       startWidth: cropRegion.width,
       startHeight: cropRegion.height,
       startCropX: cropRegion.x,
@@ -169,10 +172,11 @@ export default function CameraLandingScreen() {
     };
   };
 
-  const handleResizeBottomRight = (e: any) => {
+  const handleResizeBottomRight = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion || !photoInfo) return;
-    const deltaX = e.nativeEvent.x - resizeStateRef.current.startX;
-    const deltaY = e.nativeEvent.y - resizeStateRef.current.startY;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - resizeStateRef.current.startX) / scaleX;
+    const deltaY = (touch.pageY - resizeStateRef.current.startY) / scaleY;
 
     let newWidth = resizeStateRef.current.startWidth + deltaX;
     let newHeight = resizeStateRef.current.startHeight + deltaY;
@@ -188,10 +192,11 @@ export default function CameraLandingScreen() {
     });
   };
 
-  const handleResizeTopLeft = (e: any) => {
+  const handleResizeTopLeft = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion || !photoInfo) return;
-    const deltaX = e.nativeEvent.x - resizeStateRef.current.startX;
-    const deltaY = e.nativeEvent.y - resizeStateRef.current.startY;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - resizeStateRef.current.startX) / scaleX;
+    const deltaY = (touch.pageY - resizeStateRef.current.startY) / scaleY;
 
     let newWidth = resizeStateRef.current.startWidth - deltaX;
     let newHeight = resizeStateRef.current.startHeight - deltaY;
@@ -212,10 +217,11 @@ export default function CameraLandingScreen() {
     });
   };
 
-  const handleResizeTopRight = (e: any) => {
+  const handleResizeTopRight = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion || !photoInfo) return;
-    const deltaX = e.nativeEvent.x - resizeStateRef.current.startX;
-    const deltaY = e.nativeEvent.y - resizeStateRef.current.startY;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - resizeStateRef.current.startX) / scaleX;
+    const deltaY = (touch.pageY - resizeStateRef.current.startY) / scaleY;
 
     let newWidth = resizeStateRef.current.startWidth + deltaX;
     let newHeight = resizeStateRef.current.startHeight - deltaY;
@@ -234,10 +240,11 @@ export default function CameraLandingScreen() {
     });
   };
 
-  const handleResizeBottomLeft = (e: any) => {
+  const handleResizeBottomLeft = (e: any, scaleX: number, scaleY: number) => {
     if (!cropRegion || !photoInfo) return;
-    const deltaX = e.nativeEvent.x - resizeStateRef.current.startX;
-    const deltaY = e.nativeEvent.y - resizeStateRef.current.startY;
+    const touch = e.nativeEvent.touches ? e.nativeEvent.touches[0] : e.nativeEvent;
+    const deltaX = (touch.pageX - resizeStateRef.current.startX) / scaleX;
+    const deltaY = (touch.pageY - resizeStateRef.current.startY) / scaleY;
 
     let newWidth = resizeStateRef.current.startWidth - deltaX;
     let newHeight = resizeStateRef.current.startHeight + deltaY;
@@ -574,40 +581,39 @@ function InteractiveCropBox({
   onResizeTopRight,
   onResizeBottomLeft,
 }: InteractiveCropBoxProps) {
-  const [isDragging, setIsDragging] = useState(false);
   const dragTypeRef = useRef<'move' | 'tl' | 'tr' | 'bl' | 'br' | null>(null);
 
-  const handleMouseDown = (type: 'move' | 'tl' | 'tr' | 'bl' | 'br', e: any) => {
-    setIsDragging(true);
+  const handleTouchStart = (type: 'move' | 'tl' | 'tr' | 'bl' | 'br', e: any) => {
     dragTypeRef.current = type;
-    onResizeStart(e);
-  };
-
-  const handleMouseMove = (e: any) => {
-    if (!isDragging) return;
-
-    if (dragTypeRef.current === 'move') {
-      onCropDrag(e);
-    } else if (dragTypeRef.current === 'tl') {
-      onResizeTopLeft(e);
-    } else if (dragTypeRef.current === 'tr') {
-      onResizeTopRight(e);
-    } else if (dragTypeRef.current === 'bl') {
-      onResizeBottomLeft(e);
-    } else if (dragTypeRef.current === 'br') {
-      onResizeBottomRight(e);
+    if (type === 'move') {
+      onCropDragStart(e, scaleX, scaleY);
+    } else {
+      onResizeStart(e, scaleX, scaleY);
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handleTouchMove = (e: any) => {
+    if (!dragTypeRef.current) return;
+
+    if (dragTypeRef.current === 'move') {
+      onCropDrag(e, scaleX, scaleY);
+    } else if (dragTypeRef.current === 'tl') {
+      onResizeTopLeft(e, scaleX, scaleY);
+    } else if (dragTypeRef.current === 'tr') {
+      onResizeTopRight(e, scaleX, scaleY);
+    } else if (dragTypeRef.current === 'bl') {
+      onResizeBottomLeft(e, scaleX, scaleY);
+    } else if (dragTypeRef.current === 'br') {
+      onResizeBottomRight(e, scaleX, scaleY);
+    }
+  };
+
+  const handleTouchEnd = () => {
     dragTypeRef.current = null;
   };
 
   return (
     <View
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
       style={[
         styles.cropBoxOverlay,
         {
@@ -617,29 +623,35 @@ function InteractiveCropBox({
           height: cropRegion.height * scaleY,
         },
       ]}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* White border - draggable area */}
       <View
         style={styles.cropBoxBorder}
-        onMouseDown={(e) => handleMouseDown('move', e)}
+        onTouchStart={(e) => handleTouchStart('move', e)}
       />
 
       {/* Resize handles */}
-      <View
+      <TouchableOpacity
         style={[styles.resizeHandle, { top: -6, left: -6 }]}
-        onMouseDown={(e) => handleMouseDown('tl', e)}
+        onPressIn={(e) => handleTouchStart('tl', e)}
+        activeOpacity={1}
       />
-      <View
+      <TouchableOpacity
         style={[styles.resizeHandle, { top: -6, right: -6 }]}
-        onMouseDown={(e) => handleMouseDown('tr', e)}
+        onPressIn={(e) => handleTouchStart('tr', e)}
+        activeOpacity={1}
       />
-      <View
+      <TouchableOpacity
         style={[styles.resizeHandle, { bottom: -6, left: -6 }]}
-        onMouseDown={(e) => handleMouseDown('bl', e)}
+        onPressIn={(e) => handleTouchStart('bl', e)}
+        activeOpacity={1}
       />
-      <View
+      <TouchableOpacity
         style={[styles.resizeHandle, { bottom: -6, right: -6 }]}
-        onMouseDown={(e) => handleMouseDown('br', e)}
+        onPressIn={(e) => handleTouchStart('br', e)}
+        activeOpacity={1}
       />
     </View>
   );
