@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
+import SubjectSelectionScreen from './SubjectSelectionScreen';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -47,6 +48,7 @@ export default function CameraLandingScreen() {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [photoInfo, setPhotoInfo] = useState<{ width: number; height: number } | null>(null);
   const [cropRegion, setCropRegion] = useState<CropRegion | null>(null);
+  const [showSubjectSelection, setShowSubjectSelection] = useState(false);
   const dragStateRef = useRef<DragState>({
     startX: 0,
     startY: 0,
@@ -337,6 +339,22 @@ export default function CameraLandingScreen() {
     setCapturedPhoto(null);
     setPhotoInfo(null);
     setCropRegion(null);
+    setShowSubjectSelection(false);
+  };
+
+  const handleCropConfirm = () => {
+    setShowSubjectSelection(true);
+  };
+
+  const handleSubjectSelect = (subject: string) => {
+    console.log('Selected subject:', subject);
+    // Handle subject selection - navigate to next screen or process
+    Alert.alert('Subject Selected', `You selected: ${subject}`);
+    closeCropBox();
+  };
+
+  const handleBackFromSubject = () => {
+    setShowSubjectSelection(false);
   };
 
   if (!permission) {
@@ -364,6 +382,17 @@ export default function CameraLandingScreen() {
     );
   }
 
+  // Show subject selection screen
+  if (showSubjectSelection && capturedPhoto) {
+    return (
+      <SubjectSelectionScreen
+        croppedImageUri={capturedPhoto}
+        onBack={handleBackFromSubject}
+        onSubjectSelect={handleSubjectSelect}
+      />
+    );
+  }
+
   // Show photo with crop box if photo is captured
   if (capturedPhoto && photoInfo && cropRegion) {
     return (
@@ -385,6 +414,7 @@ export default function CameraLandingScreen() {
           onResizeLeft={handleResizeLeft}
           onResizeRight={handleResizeRight}
           onClose={closeCropBox}
+          onConfirm={handleCropConfirm}
         />
       </View>
     );
@@ -519,6 +549,7 @@ interface SimpleCropBoxProps {
   onResizeLeft: (e: any, scaleX: number, scaleY: number) => void;
   onResizeRight: (e: any, scaleX: number, scaleY: number) => void;
   onClose: () => void;
+  onConfirm: () => void;
 }
 
 function SimpleCropBox({
@@ -538,6 +569,7 @@ function SimpleCropBox({
   onResizeLeft,
   onResizeRight,
   onClose,
+  onConfirm,
 }: SimpleCropBoxProps) {
   // Calculate display dimensions to fit image on screen
   const maxWidth = SCREEN_WIDTH;
@@ -554,7 +586,6 @@ function SimpleCropBox({
   const scaleX = displayWidth / imageWidth;
   const scaleY = displayHeight / imageHeight;
 
-  // Always use the web/simple version - gesture handler not available for web bundling
   return (
     <View style={styles.cropBoxContainer}>
       <View style={styles.cropBoxWrapper}>
@@ -632,8 +663,8 @@ function SimpleCropBox({
           <TouchableOpacity style={styles.cropCancelButton} onPress={onClose}>
             <Text style={styles.cropButtonText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cropConfirmButton} onPress={onClose}>
-            <Text style={styles.cropButtonText}>Crop</Text>
+          <TouchableOpacity style={styles.cropConfirmButton} onPress={onConfirm}>
+            <Text style={styles.cropButtonText}>Confirm</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1072,12 +1103,10 @@ const styles = StyleSheet.create({
   },
   cropBoxOverlay: {
     position: 'absolute',
-    
-    borderColor: '#FFFFFF',
   },
   cropBoxBorder: {
     flex: 1,
-   
+    borderWidth: 2,
     borderColor: '#FFFFFF',
   },
   cornerHandle: {
@@ -1089,41 +1118,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cornerTopLeft: {
-  width: 50,
-  height: 50,
-  borderTopWidth: 5,
-  borderLeftWidth: 5,
-  borderColor: '#FFFFFF',
-  borderTopLeftRadius: 12,
-},
-
-cornerTopRight: {
-  width: 50,
-  height: 50,
-  borderTopWidth: 5,
-  borderRightWidth: 5,
-  borderColor: '#FFFFFF',
-  borderTopRightRadius: 12,
-},
-
-cornerBottomLeft: {
-  width: 50,
-  height: 50,
-  borderBottomWidth: 5,
-  borderLeftWidth: 5,
-  borderColor: '#FFFFFF',
-  borderBottomLeftRadius: 12,
-},
-
-cornerBottomRight: {
-  width: 50,
-  height: 50,
-  borderBottomWidth: 5,
-  borderRightWidth: 5,
-  borderColor: '#FFFFFF',
-  borderBottomRightRadius: 12,
-},
-
+    width: 50,
+    height: 50,
+    borderTopWidth: 5,
+    borderLeftWidth: 5,
+    borderColor: '#FFFFFF',
+    borderTopLeftRadius: 12,
+  },
+  cornerTopRight: {
+    width: 50,
+    height: 50,
+    borderTopWidth: 5,
+    borderRightWidth: 5,
+    borderColor: '#FFFFFF',
+    borderTopRightRadius: 12,
+  },
+  cornerBottomLeft: {
+    width: 50,
+    height: 50,
+    borderBottomWidth: 5,
+    borderLeftWidth: 5,
+    borderColor: '#FFFFFF',
+    borderBottomLeftRadius: 12,
+  },
+  cornerBottomRight: {
+    width: 50,
+    height: 50,
+    borderBottomWidth: 5,
+    borderRightWidth: 5,
+    borderColor: '#FFFFFF',
+    borderBottomRightRadius: 12,
+  },
   edgeHandle: {
     position: 'absolute',
     backgroundColor: 'transparent',
