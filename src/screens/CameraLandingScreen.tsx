@@ -88,11 +88,9 @@ export default function CameraLandingScreen() {
       });
       console.log('Picture taken:', photo);
       
-      // Set captured photo
       setCapturedPhoto(photo.uri);
       setPhotoInfo({ width: photo.width, height: photo.height });
       
-      // Initialize crop region (60% width, 40% height, centered)
       const cropW = photo.width * 0.6;
       const cropH = photo.height * 0.4;
       const cropX = (photo.width - cropW) / 2;
@@ -111,9 +109,7 @@ export default function CameraLandingScreen() {
   };
 
   const toggleCameraType = () => {
-    setCameraType(current => 
-      current === 'back' ? 'front' : 'back'
-    );
+    setCameraType(current => current === 'back' ? 'front' : 'back');
   };
 
   const toggleFlash = () => {
@@ -150,15 +146,10 @@ export default function CameraLandingScreen() {
     let newX = dragStateRef.current.startCropX + deltaX;
     let newY = dragStateRef.current.startCropY + deltaY;
 
-    // Keep crop box within image boundaries
     newX = Math.max(0, Math.min(newX, photoInfo.width - cropRegion.width));
     newY = Math.max(0, Math.min(newY, photoInfo.height - cropRegion.height));
 
-    setCropRegion({
-      ...cropRegion,
-      x: newX,
-      y: newY,
-    });
+    setCropRegion({ ...cropRegion, x: newX, y: newY });
   };
 
   const handleResizeStart = (e: any, scaleX: number, scaleY: number) => {
@@ -187,11 +178,7 @@ export default function CameraLandingScreen() {
     newWidth = Math.max(minSize, Math.min(newWidth, photoInfo.width - cropRegion.x));
     newHeight = Math.max(minSize, Math.min(newHeight, photoInfo.height - cropRegion.y));
 
-    setCropRegion({
-      ...cropRegion,
-      width: newWidth,
-      height: newHeight,
-    });
+    setCropRegion({ ...cropRegion, width: newWidth, height: newHeight });
   };
 
   const handleResizeTopLeft = (e: any, scaleX: number, scaleY: number) => {
@@ -211,12 +198,7 @@ export default function CameraLandingScreen() {
     newX = Math.max(0, Math.min(newX, photoInfo.width - minSize));
     newY = Math.max(0, Math.min(newY, photoInfo.height - minSize));
 
-    setCropRegion({
-      x: newX,
-      y: newY,
-      width: newWidth,
-      height: newHeight,
-    });
+    setCropRegion({ x: newX, y: newY, width: newWidth, height: newHeight });
   };
 
   const handleResizeTopRight = (e: any, scaleX: number, scaleY: number) => {
@@ -234,12 +216,7 @@ export default function CameraLandingScreen() {
     newHeight = Math.max(minSize, newHeight);
     newY = Math.max(0, Math.min(newY, photoInfo.height - minSize));
 
-    setCropRegion({
-      ...cropRegion,
-      y: newY,
-      width: newWidth,
-      height: newHeight,
-    });
+    setCropRegion({ ...cropRegion, y: newY, width: newWidth, height: newHeight });
   };
 
   const handleResizeBottomLeft = (e: any, scaleX: number, scaleY: number) => {
@@ -257,12 +234,7 @@ export default function CameraLandingScreen() {
     newHeight = Math.max(minSize, Math.min(newHeight, photoInfo.height - cropRegion.y));
     newX = Math.max(0, Math.min(newX, photoInfo.width - minSize));
 
-    setCropRegion({
-      x: newX,
-      y: cropRegion.y,
-      width: newWidth,
-      height: newHeight,
-    });
+    setCropRegion({ x: newX, y: cropRegion.y, width: newWidth, height: newHeight });
   };
 
   const handleResizeTop = (e: any, scaleX: number, scaleY: number) => {
@@ -277,11 +249,7 @@ export default function CameraLandingScreen() {
     newHeight = Math.max(minSize, newHeight);
     newY = Math.max(0, Math.min(newY, photoInfo.height - minSize));
 
-    setCropRegion({
-      ...cropRegion,
-      y: newY,
-      height: newHeight,
-    });
+    setCropRegion({ ...cropRegion, y: newY, height: newHeight });
   };
 
   const handleResizeBottom = (e: any, scaleX: number, scaleY: number) => {
@@ -294,10 +262,7 @@ export default function CameraLandingScreen() {
     const minSize = 50;
     newHeight = Math.max(minSize, Math.min(newHeight, photoInfo.height - cropRegion.y));
 
-    setCropRegion({
-      ...cropRegion,
-      height: newHeight,
-    });
+    setCropRegion({ ...cropRegion, height: newHeight });
   };
 
   const handleResizeLeft = (e: any, scaleX: number, scaleY: number) => {
@@ -312,11 +277,7 @@ export default function CameraLandingScreen() {
     newWidth = Math.max(minSize, newWidth);
     newX = Math.max(0, Math.min(newX, photoInfo.width - minSize));
 
-    setCropRegion({
-      ...cropRegion,
-      x: newX,
-      width: newWidth,
-    });
+    setCropRegion({ ...cropRegion, x: newX, width: newWidth });
   };
 
   const handleResizeRight = (e: any, scaleX: number, scaleY: number) => {
@@ -329,10 +290,7 @@ export default function CameraLandingScreen() {
     const minSize = 50;
     newWidth = Math.max(minSize, Math.min(newWidth, photoInfo.width - cropRegion.x));
 
-    setCropRegion({
-      ...cropRegion,
-      width: newWidth,
-    });
+    setCropRegion({ ...cropRegion, width: newWidth });
   };
 
   const closeCropBox = () => {
@@ -348,12 +306,11 @@ export default function CameraLandingScreen() {
 
   const handleSubjectSelect = (subject: string) => {
     console.log('Selected subject:', subject);
-    // Handle subject selection - navigate to next screen or process
     Alert.alert('Subject Selected', `You selected: ${subject}`);
     closeCropBox();
   };
 
-  const handleBackFromSubject = () => {
+  const handleBackFromSubjectWithEdit = () => {
     setShowSubjectSelection(false);
   };
 
@@ -382,18 +339,19 @@ export default function CameraLandingScreen() {
     );
   }
 
-  // Show subject selection screen
-  if (showSubjectSelection && capturedPhoto) {
+  if (showSubjectSelection && capturedPhoto && photoInfo && cropRegion) {
     return (
       <SubjectSelectionScreen
-        croppedImageUri={capturedPhoto}
-        onBack={handleBackFromSubject}
+        imageUri={capturedPhoto}
+        imageWidth={photoInfo.width}
+        imageHeight={photoInfo.height}
+        cropRegion={cropRegion}
+        onBack={handleBackFromSubjectWithEdit}
         onSubjectSelect={handleSubjectSelect}
       />
     );
   }
 
-  // Show photo with crop box if photo is captured
   if (capturedPhoto && photoInfo && cropRegion) {
     return (
       <View style={styles.container}>
@@ -430,14 +388,12 @@ export default function CameraLandingScreen() {
           flash={flashMode}
           onCameraReady={handleCameraReady}
         >
-          {/* Top Bar */}
           <View style={styles.topBar}>
             <View style={styles.brandContainer}>
               <Text style={styles.brandEmoji}>🎁</Text>
               <Text style={styles.brandText}>Get pro</Text>
             </View>
             
-            {/* Camera Status */}
             {!cameraReady && (
               <View style={styles.cameraStatus}>
                 <Ionicons name="sync-outline" size={16} color="#FFFFFF" />
@@ -446,21 +402,18 @@ export default function CameraLandingScreen() {
             )}
           </View>
 
-          {/* Center Content */}
           <View style={styles.centerContent}>
             <Text style={styles.instructionText}>
               Take a pic and get{'\n'}an answer
             </Text>
           </View>
 
-          {/* Camera Controls */}
           <View style={styles.cameraControls}>
             <TouchableOpacity style={styles.flipButton} onPress={toggleCameraType}>
               <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
-          {/* Flash Toggle Button */}
           <View style={styles.flashButtonContainer}>
             <TouchableOpacity 
               style={styles.flashButton} 
@@ -477,7 +430,6 @@ export default function CameraLandingScreen() {
         </CameraView>
       </View>
 
-      {/* Footer */}
       <View style={styles.footerWrapper}>
         <View style={styles.whiteTopBorder} />
         <View style={styles.footerContent}>
@@ -571,7 +523,6 @@ function SimpleCropBox({
   onClose,
   onConfirm,
 }: SimpleCropBoxProps) {
-  // Calculate display dimensions to fit image on screen
   const maxWidth = SCREEN_WIDTH;
   const maxHeight = SCREEN_HEIGHT * 0.8;
   
@@ -589,57 +540,14 @@ function SimpleCropBox({
   return (
     <View style={styles.cropBoxContainer}>
       <View style={styles.cropBoxWrapper}>
-        {/* Image with overlay */}
         <View style={[styles.imageContainer, { width: displayWidth, height: displayHeight }]}>
           <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} />
           
-          {/* Dark overlay outside crop area */}
-          <View
-            style={[
-              styles.darkOverlay,
-              {
-                top: 0,
-                left: 0,
-                right: 0,
-                height: cropRegion.y * scaleY,
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.darkOverlay,
-              {
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: (imageHeight - cropRegion.y - cropRegion.height) * scaleY,
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.darkOverlay,
-              {
-                top: cropRegion.y * scaleY,
-                left: 0,
-                width: cropRegion.x * scaleX,
-                height: cropRegion.height * scaleY,
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.darkOverlay,
-              {
-                top: cropRegion.y * scaleY,
-                right: 0,
-                width: (imageWidth - cropRegion.x - cropRegion.width) * scaleX,
-                height: cropRegion.height * scaleY,
-              },
-            ]}
-          />
+          <View style={[styles.darkOverlay, { top: 0, left: 0, right: 0, height: cropRegion.y * scaleY }]} />
+          <View style={[styles.darkOverlay, { bottom: 0, left: 0, right: 0, height: (imageHeight - cropRegion.y - cropRegion.height) * scaleY }]} />
+          <View style={[styles.darkOverlay, { top: cropRegion.y * scaleY, left: 0, width: cropRegion.x * scaleX, height: cropRegion.height * scaleY }]} />
+          <View style={[styles.darkOverlay, { top: cropRegion.y * scaleY, right: 0, width: (imageWidth - cropRegion.x - cropRegion.width) * scaleX, height: cropRegion.height * scaleY }]} />
 
-          {/* Crop box with interactive handles */}
           <InteractiveCropBox
             cropRegion={cropRegion}
             scaleX={scaleX}
@@ -658,7 +566,6 @@ function SimpleCropBox({
           />
         </View>
 
-        {/* Action buttons */}
         <View style={styles.cropActionButtons}>
           <TouchableOpacity style={styles.cropCancelButton} onPress={onClose}>
             <Text style={styles.cropButtonText}>Cancel</Text>
@@ -672,7 +579,6 @@ function SimpleCropBox({
   );
 }
 
-// Interactive crop box component using touch events for mobile
 interface InteractiveCropBoxProps {
   cropRegion: CropRegion;
   scaleX: number;
@@ -721,33 +627,15 @@ function InteractiveCropBox({
     if (!dragTypeRef.current) return;
 
     switch (dragTypeRef.current) {
-      case 'move':
-        onCropDrag(e, scaleX, scaleY);
-        break;
-      case 'tl':
-        onResizeTopLeft(e, scaleX, scaleY);
-        break;
-      case 'tr':
-        onResizeTopRight(e, scaleX, scaleY);
-        break;
-      case 'bl':
-        onResizeBottomLeft(e, scaleX, scaleY);
-        break;
-      case 'br':
-        onResizeBottomRight(e, scaleX, scaleY);
-        break;
-      case 't':
-        onResizeTop(e, scaleX, scaleY);
-        break;
-      case 'b':
-        onResizeBottom(e, scaleX, scaleY);
-        break;
-      case 'l':
-        onResizeLeft(e, scaleX, scaleY);
-        break;
-      case 'r':
-        onResizeRight(e, scaleX, scaleY);
-        break;
+      case 'move': onCropDrag(e, scaleX, scaleY); break;
+      case 'tl': onResizeTopLeft(e, scaleX, scaleY); break;
+      case 'tr': onResizeTopRight(e, scaleX, scaleY); break;
+      case 'bl': onResizeBottomLeft(e, scaleX, scaleY); break;
+      case 'br': onResizeBottomRight(e, scaleX, scaleY); break;
+      case 't': onResizeTop(e, scaleX, scaleY); break;
+      case 'b': onResizeBottom(e, scaleX, scaleY); break;
+      case 'l': onResizeLeft(e, scaleX, scaleY); break;
+      case 'r': onResizeRight(e, scaleX, scaleY); break;
     }
   };
 
@@ -769,63 +657,27 @@ function InteractiveCropBox({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* White border - draggable area */}
-      <View
-        style={styles.cropBoxBorder}
-        onTouchStart={(e) => handleTouchStart('move', e)}
-      />
+      <View style={styles.cropBoxBorder} onTouchStart={(e) => handleTouchStart('move', e)} />
 
-      {/* Corner resize handles - L-shaped */}
-      <TouchableOpacity
-        style={[styles.cornerHandle, { top: -3, left: -3 }]}
-        onPressIn={(e) => handleTouchStart('tl', e)}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={[styles.cornerHandle, { top: -3, left: -3 }]} onPressIn={(e) => handleTouchStart('tl', e)} activeOpacity={1}>
         <View style={styles.cornerTopLeft} />
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.cornerHandle, { top: -3, right: -3 }]}
-        onPressIn={(e) => handleTouchStart('tr', e)}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={[styles.cornerHandle, { top: -3, right: -3 }]} onPressIn={(e) => handleTouchStart('tr', e)} activeOpacity={1}>
         <View style={styles.cornerTopRight} />
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.cornerHandle, { bottom: -3, left: -3 }]}
-        onPressIn={(e) => handleTouchStart('bl', e)}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={[styles.cornerHandle, { bottom: -3, left: -3 }]} onPressIn={(e) => handleTouchStart('bl', e)} activeOpacity={1}>
         <View style={styles.cornerBottomLeft} />
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.cornerHandle, { bottom: -3, right: -3 }]}
-        onPressIn={(e) => handleTouchStart('br', e)}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={[styles.cornerHandle, { bottom: -3, right: -3 }]} onPressIn={(e) => handleTouchStart('br', e)} activeOpacity={1}>
         <View style={styles.cornerBottomRight} />
       </TouchableOpacity>
 
-      {/* Edge resize handles */}
-      <TouchableOpacity
-        style={[styles.edgeHandle, styles.topEdge]}
-        onPressIn={(e) => handleTouchStart('t', e)}
-        activeOpacity={1}
-      />
-      <TouchableOpacity
-        style={[styles.edgeHandle, styles.bottomEdge]}
-        onPressIn={(e) => handleTouchStart('b', e)}
-        activeOpacity={1}
-      />
-      <TouchableOpacity
-        style={[styles.edgeHandle, styles.leftEdge]}
-        onPressIn={(e) => handleTouchStart('l', e)}
-        activeOpacity={1}
-      />
-      <TouchableOpacity
-        style={[styles.edgeHandle, styles.rightEdge]}
-        onPressIn={(e) => handleTouchStart('r', e)}
-        activeOpacity={1}
-      />
+    
+
+      <TouchableOpacity style={[styles.edgeHandle, styles.topEdge]} onPressIn={(e) => handleTouchStart('t', e)} activeOpacity={1} />
+      <TouchableOpacity style={[styles.edgeHandle, styles.bottomEdge]} onPressIn={(e) => handleTouchStart('b', e)} activeOpacity={1} />
+      <TouchableOpacity style={[styles.edgeHandle, styles.leftEdge]} onPressIn={(e) => handleTouchStart('l', e)} activeOpacity={1} />
+      <TouchableOpacity style={[styles.edgeHandle, styles.rightEdge]} onPressIn={(e) => handleTouchStart('r', e)} activeOpacity={1} />
     </View>
   );
 }
@@ -1099,7 +951,7 @@ const styles = StyleSheet.create({
   },
   darkOverlay: {
     position: 'absolute',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
   },
   cropBoxOverlay: {
     position: 'absolute',
@@ -1192,13 +1044,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   cropConfirmButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 40,
     paddingVertical: 12,
     borderRadius: 8,
   },
   cropButtonText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 16,
     fontWeight: '600',
   },

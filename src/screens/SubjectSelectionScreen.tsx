@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,26 @@ import {
   Image,
   Dimensions,
   ScrollView,
+  PanResponder,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+interface CropRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 interface SubjectSelectionScreenProps {
-  croppedImageUri: string;
+  imageUri: string;
+  imageWidth: number;
+  imageHeight: number;
+  cropRegion: CropRegion;
   onBack: () => void;
   onSubjectSelect: (subject: string) => void;
 }
@@ -28,10 +41,62 @@ const SUBJECTS = [
 ];
 
 export default function SubjectSelectionScreen({
-  croppedImageUri,
+  imageUri,
+  imageWidth,
+  imageHeight,
+  cropRegion,
   onBack,
   onSubjectSelect,
 }: SubjectSelectionScreenProps) {
+  const translateY = useRef(new Animated.Value(0)).current;
+  const sheetHeight = useRef(SCREEN_HEIGHT * 0.5).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100) {
+          // Swipe down detected - go back to crop page
+          Animated.timing(translateY, {
+            toValue: sheetHeight,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            onBack();
+          });
+        } else {
+          // Return to original position
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+  // Calculate display dimensions to fill the screen
+  const maxWidth = SCREEN_WIDTH;
+  const maxHeight = SCREEN_HEIGHT * 0.7; // Use 70% of screen height for image
+  
+  let displayWidth = maxWidth;
+  let displayHeight = (imageHeight / imageWidth) * displayWidth;
+  
+  if (displayHeight > maxHeight) {
+    displayHeight = maxHeight;
+    displayWidth = (imageWidth / imageHeight) * displayHeight;
+  }
+
+  const scaleX = displayWidth / imageWidth;
+  const scaleY = displayHeight / imageHeight;
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -43,32 +108,66 @@ export default function SubjectSelectionScreen({
         <View style={styles.placeholder} />
       </View>
 
-      {/* Preview Image */}
+      {/* Preview Image with Crop Box - Full Screen */}
       <View style={styles.previewContainer}>
-        <View style={styles.previewWrapper}>
-          <Image 
-            source={{ uri: croppedImageUri }} 
+        <View style={[styles.previewWrapper, { width: displayWidth, height: displayHeight }]}>
+          <Image
+            source={{ uri: imageUri }}
             style={styles.previewImage}
-            resizeMode="contain"
+            resizeMode="cover"
           />
+          
+          {/* Dark overlays outside crop box */}
+          <View style={[styles.darkOverlay, { top: 0, left: 0, right: 0, height: cropRegion.y * scaleY }]} />
+          <View style={[styles.darkOverlay, { bottom: 0, left: 0, right: 0, height: (imageHeight - cropRegion.y - cropRegion.height) * scaleY }]} />
+          <View style={[styles.darkOverlay, { top: cropRegion.y * scaleY, left: 0, width: cropRegion.x * scaleX, height: cropRegion.height * scaleY }]} />
+          <View style={[styles.darkOverlay, { top: cropRegion.y * scaleY, right: 0, width: (imageWidth - cropRegion.x - cropRegion.width) * scaleX, height: cropRegion.height * scaleY }]} />
+          
+          {/* Crop box overlay */}
+          <View
+            style={[
+              styles.cropBoxOverlay,
+              {
+                left: cropRegion.x * scaleX,
+                top: cropRegion.y * scaleY,
+                width: cropRegion.width * scaleX,
+                height: cropRegion.height * scaleY,
+              },
+            ]}
+          >
+            <View style={styles.cropBoxBorder} />
+            
+            {/* Corner indicators */}
+            <View style={[styles.cornerIndicator, { top: -3, left: -3 }]}>
+              <View style={styles.cornerTopLeft} />
+            </View>
+            <View style={[styles.cornerIndicator, { top: -3, right: -3 }]}>
+              <View style={styles.cornerTopRight} />
+            </View>
+            <View style={[styles.cornerIndicator, { bottom: -3, left: -3 }]}>
+              <View style={styles.cornerBottomLeft} />
+            </View>
+            <View style={[styles.cornerIndicator, { bottom: -3, right: -3 }]}>
+              <View style={styles.cornerBottomRight} />
+            </View>
+          </View>
         </View>
         
-        {/* App branding */}
-        <View style={styles.appBranding}>
-          <View style={styles.appIcon}>
-            <Text style={styles.appIconText}>📱</Text>
-          </View>
-          <Text style={styles.appName}>slate</Text>
-        </View>
       </View>
 
-      {/* Bottom Sheet */}
-      <View style={styles.bottomSheet}>
+      {/* Bottom Sheet with Swipe Down */}
+      <Animated.View
+        style={[
+          styles.bottomSheet,
+          {
+            transform: [{ translateY }]
+          }
+        ]}
+        {...panResponder.panHandlers}
+      >
         <View style={styles.handleBar} />
         
         <View style={styles.sheetContent}>
-          <Text style={styles.questionTitle}>What is the question{'\n'}related to?</Text>
-          
           <ScrollView 
             style={styles.subjectList}
             showsVerticalScrollIndicator={false}
@@ -86,7 +185,7 @@ export default function SubjectSelectionScreen({
             ))}
           </ScrollView>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -122,43 +221,66 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
   previewWrapper: {
-    width: SCREEN_WIDTH - 40,
-    height: 250,
     backgroundColor: '#000000',
-    borderRadius: 12,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    position: 'relative',
   },
   previewImage: {
     width: '100%',
     height: '100%',
   },
-  appBranding: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 8,
+  darkOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
-  appIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#34C759',
+  cropBoxOverlay: {
+    position: 'absolute',
+  },
+  cropBoxBorder: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  cornerIndicator: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  appIconText: {
-    fontSize: 18,
+  cornerTopLeft: {
+    width: 30,
+    height: 30,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: '#FFFFFF',
+    borderTopLeftRadius: 8,
   },
-  appName: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '300',
-    letterSpacing: 1,
+  cornerTopRight: {
+    width: 30,
+    height: 30,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#FFFFFF',
+    borderTopRightRadius: 8,
+  },
+  cornerBottomLeft: {
+    width: 30,
+    height: 30,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: '#FFFFFF',
+    borderBottomLeftRadius: 8,
+  },
+  cornerBottomRight: {
+    width: 30,
+    height: 30,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#FFFFFF',
+    borderBottomRightRadius: 8,
   },
   bottomSheet: {
     backgroundColor: '#FFFFFF',
