@@ -138,16 +138,16 @@ export default function SubjectSelectionScreen({
             <View style={styles.cropBoxBorder} />
             
             {/* Corner indicators */}
-            <View style={[styles.cornerIndicator, { top: -3, left: -3 }]}>
+            <View style={[styles.cornerIndicator, { top: -2, left: -2 }]}>
               <View style={styles.cornerTopLeft} />
             </View>
-            <View style={[styles.cornerIndicator, { top: -3, right: -3 }]}>
+            <View style={[styles.cornerIndicator, { top: -2, right: -2 }]}>
               <View style={styles.cornerTopRight} />
             </View>
-            <View style={[styles.cornerIndicator, { bottom: -3, left: -3 }]}>
+            <View style={[styles.cornerIndicator, { bottom: -2, left: -2 }]}>
               <View style={styles.cornerBottomLeft} />
             </View>
-            <View style={[styles.cornerIndicator, { bottom: -3, right: -3 }]}>
+            <View style={[styles.cornerIndicator, { bottom: -2, right: -2 }]}>
               <View style={styles.cornerBottomRight} />
             </View>
           </View>
@@ -233,14 +233,13 @@ const styles = StyleSheet.create({
   },
   darkOverlay: {
     position: 'absolute',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
   },
   cropBoxOverlay: {
     position: 'absolute',
   },
   cropBoxBorder: {
     flex: 1,
-    borderWidth: 1,
     borderColor: '#FFFFFF',
   },
   cornerIndicator: {
@@ -250,37 +249,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cornerTopLeft: {
-    width: 30,
-    height: 30,
-    borderTopWidth: 4,
-    borderLeftWidth: 4,
+cornerTopLeft: {
+    width: 50,
+    height: 50,
+    borderTopWidth: 5,
+    borderLeftWidth: 5,
     borderColor: '#FFFFFF',
-    borderTopLeftRadius: 8,
+    borderTopLeftRadius: 12,
   },
   cornerTopRight: {
-    width: 30,
-    height: 30,
-    borderTopWidth: 4,
-    borderRightWidth: 4,
+    width: 50,
+    height: 50,
+    borderTopWidth: 5,
+    borderRightWidth: 5,
     borderColor: '#FFFFFF',
-    borderTopRightRadius: 8,
+    borderTopRightRadius: 12,
   },
   cornerBottomLeft: {
-    width: 30,
-    height: 30,
-    borderBottomWidth: 4,
-    borderLeftWidth: 4,
+    width: 50,
+    height: 50,
+    borderBottomWidth: 5,
+    borderLeftWidth: 5,
     borderColor: '#FFFFFF',
-    borderBottomLeftRadius: 8,
+    borderBottomLeftRadius: 12,
   },
-  cornerBottomRight: {
-    width: 30,
-    height: 30,
-    borderBottomWidth: 4,
-    borderRightWidth: 4,
+ cornerBottomRight: {
+    width: 50,
+    height: 50,
+    borderBottomWidth: 5,
+    borderRightWidth: 5,
     borderColor: '#FFFFFF',
-    borderBottomRightRadius: 8,
+    borderBottomRightRadius: 12,
   },
   bottomSheet: {
     backgroundColor: '#FFFFFF',

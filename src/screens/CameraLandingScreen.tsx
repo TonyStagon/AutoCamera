@@ -568,7 +568,7 @@ function SimpleCropBox({
 
         <View style={styles.cropActionButtons}>
           <TouchableOpacity style={styles.cropCancelButton} onPress={onClose}>
-            <Text style={styles.cropButtonText}>Cancel</Text>
+            <Text style={styles.cropButtonText}>Retake</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cropConfirmButton} onPress={onConfirm}>
             <Text style={styles.cropButtonText}>Confirm</Text>
@@ -659,16 +659,16 @@ function InteractiveCropBox({
     >
       <View style={styles.cropBoxBorder} onTouchStart={(e) => handleTouchStart('move', e)} />
 
-      <TouchableOpacity style={[styles.cornerHandle, { top: -3, left: -3 }]} onPressIn={(e) => handleTouchStart('tl', e)} activeOpacity={1}>
+      <TouchableOpacity style={[styles.cornerHandle, { top: -2, left: -2 }]} onPressIn={(e) => handleTouchStart('tl', e)} activeOpacity={1}>
         <View style={styles.cornerTopLeft} />
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.cornerHandle, { top: -3, right: -3 }]} onPressIn={(e) => handleTouchStart('tr', e)} activeOpacity={1}>
+      <TouchableOpacity style={[styles.cornerHandle, { top: -2, right: -2 }]} onPressIn={(e) => handleTouchStart('tr', e)} activeOpacity={1}>
         <View style={styles.cornerTopRight} />
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.cornerHandle, { bottom: -3, left: -3 }]} onPressIn={(e) => handleTouchStart('bl', e)} activeOpacity={1}>
+      <TouchableOpacity style={[styles.cornerHandle, { bottom: -2, left: -2 }]} onPressIn={(e) => handleTouchStart('bl', e)} activeOpacity={1}>
         <View style={styles.cornerBottomLeft} />
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.cornerHandle, { bottom: -3, right: -3 }]} onPressIn={(e) => handleTouchStart('br', e)} activeOpacity={1}>
+      <TouchableOpacity style={[styles.cornerHandle, { bottom: -2, right: -2 }]} onPressIn={(e) => handleTouchStart('br', e)} activeOpacity={1}>
         <View style={styles.cornerBottomRight} />
       </TouchableOpacity>
 
@@ -937,16 +937,19 @@ const styles = StyleSheet.create({
   },
   cropBoxContainer: {
     flex: 1,
+   
     backgroundColor: '#000000',
   },
   cropBoxWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    
     paddingBottom: 60,
   },
   imageContainer: {
     position: 'relative',
+    
     backgroundColor: '#000000',
   },
   darkOverlay: {
@@ -955,11 +958,13 @@ const styles = StyleSheet.create({
   },
   cropBoxOverlay: {
     position: 'absolute',
+
   },
   cropBoxBorder: {
     flex: 1,
-    borderWidth: 2,
+
     borderColor: '#FFFFFF',
+    
   },
   cornerHandle: {
     position: 'absolute',
@@ -1038,7 +1043,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cropCancelButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#08ca22ff',
     paddingHorizontal: 40,
     paddingVertical: 12,
     borderRadius: 8,
